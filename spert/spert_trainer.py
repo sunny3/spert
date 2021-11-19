@@ -8,8 +8,8 @@ from torch.nn import DataParallel
 from torch.optim import Optimizer
 import transformers
 from torch.utils.data import DataLoader
-from transformers import AdamW, BertConfig
-from transformers import BertTokenizer
+from transformers import AdamW, BertConfig, XLMRobertaConfig
+from transformers import BertTokenizer, XLMRobertaTokenizer
 
 from spert import models, prediction
 from spert import sampling
@@ -31,9 +31,25 @@ class SpERTTrainer(BaseTrainer):
         super().__init__(args)
 
         # byte-pair encoding
-        self._tokenizer = BertTokenizer.from_pretrained(args.tokenizer_path,
-                                                        do_lower_case=args.lowercase,
-                                                        cache_dir=args.cache_path)
+        if self._args.model_type=="spert":
+            self._tokenizer = BertTokenizer.from_pretrained(args.tokenizer_path,
+                                                            do_lower_case=args.lowercase,
+                                                            cache_dir=args.cache_path)
+        elif self._args.model_type=="spert-xlmroberta":
+            # Костыль. У роберты токены bos==cls==0 ,а pad=1. У берта cls==101, pad=0.
+            # в ридере хардкодом в нескольких местах нулями заполняются последовательности до прямоугольного батча
+            # роберта должна знать, что паддинг это 0, а не 1.
+            self._tokenizer = XLMRobertaTokenizer.from_pretrained(args.tokenizer_path,
+                                                            do_lower_case=args.lowercase,
+                                                            cache_dir=args.cache_path,
+                                                            bos_token='<pad>',
+                                                            eos_token='</s>',
+                                                            sep_token='</s>',
+                                                            cls_token='<pad>',
+                                                            unk_token='<unk>',
+                                                            pad_token='<s>')
+        else:
+            raise ValueError("Unknown argument args.model_type={}".format(str(args.model_type)))
 
     def train(self, train_path: str, valid_path: str, types_path: str, input_reader_cls: Type[BaseInputReader]):
         args = self._args
@@ -70,7 +86,6 @@ class SpERTTrainer(BaseTrainer):
         #     model = torch.nn.DataParallel(model)
 
         model.to(self._device)
-
         # create optimizer
         optimizer_params = self._get_optimizer_params(model)
         optimizer = AdamW(optimizer_params, lr=args.lr, weight_decay=args.weight_decay, correct_bias=False)
@@ -149,15 +164,19 @@ class SpERTTrainer(BaseTrainer):
 
     def _load_model(self, input_reader):
         model_class = models.get_model(self._args.model_type)
-
-        config = BertConfig.from_pretrained(self._args.model_path, cache_dir=self._args.cache_path)
+        
+        if self._args.model_type=="spert":
+            config = BertConfig.from_pretrained(self._args.model_path, cache_dir=self._args.cache_path)
+        elif self._args.model_type=="spert-xlmroberta":
+            config = XLMRobertaConfig.from_pretrained(self._args.model_path, cache_dir=self._args.cache_path,
+                                                     pad_token_id=0, bos_token_id=1)
         util.check_version(config, model_class, self._args.model_path)
 
         config.spert_version = model_class.VERSION
         model = model_class.from_pretrained(self._args.model_path,
                                             config=config,
                                             # SpERT model parameters
-                                            cls_token=self._tokenizer.convert_tokens_to_ids('[CLS]'),
+                                            cls_token=self._tokenizer.convert_tokens_to_ids(self._tokenizer._cls_token),
                                             relation_types=input_reader.relation_type_count - 1,
                                             entity_types=input_reader.entity_type_count,
                                             max_pairs=self._args.max_pairs,
@@ -184,7 +203,6 @@ class SpERTTrainer(BaseTrainer):
         for batch in tqdm(data_loader, total=total, desc='Train epoch %s' % epoch):
             model.train()
             batch = util.to_device(batch, self._device)
-
             # forward step
             entity_logits, rel_logits = model(encodings=batch['encodings'], context_masks=batch['context_masks'],
                                               entity_masks=batch['entity_masks'], entity_sizes=batch['entity_sizes'],

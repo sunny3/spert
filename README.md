@@ -61,3 +61,16 @@ Markus Eberts, Adrian Ulges. Span-based Joint Entity and Relation Extraction wit
 [4] Pankaj Gupta,  Hinrich Schütze, and Bernt Andrassy, ‘Table Filling Multi-Task Recurrent  Neural  Network  for  Joint  Entity  and  Relation Extraction’, in Proc. of COLING 2016, pp. 2537–2547, Osaka, Japan, (December 2016). The COLING 2016 Organizing Committee.
 [5] Iz Beltagy, Kyle Lo, and Arman Cohan, ‘SciBERT: A Pretrained Language Model for Scientific Text’, in EMNLP, (2019).
 ```
+
+# Модификации https://github.com/gilmoright/spert
+Запуск проводил с теми же requirements, кроме pytorch и numpy, у меня был установлен pytorch 1.10.0 (вместо 1.4.0) и numpy 1.21.4 (вместо 1.17.4)
+
+В конфиге model_type для берта остался spert, для роберты spert-xlmroberta
+
+Добавил класс SpERT_XLMRoberta, который является копипастой SpERT, но с другим родителем и атрибутом self.roberta вместо self.bert. Может можно было как-то элегантней это сделать - не придумал.
+
+Роберта требует поставить SentencePiece: https://github.com/google/sentencepiece#installation
+
+Заменил везде захардкоженные токены [CLS] на tokenizer._cls_token.
+
+И поменял у роберты местами токены cls и pad. Потому что у неё первый имеет индекс 0, а второй 1. У берта наоборот. Этот момент очень сомнительный.

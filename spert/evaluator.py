@@ -357,8 +357,8 @@ class Evaluator:
         return html
 
     def _prettify(self, text: str):
-        text = text.replace('_start_', '').replace('_classify_', '').replace('<unk>', '').replace('⁇', '')
-        text = text.replace('[CLS]', '').replace('[SEP]', '').replace('[PAD]', '')
+        text = text.replace('_start_', '').replace('_classify_', '').replace(self._text_encoder._unk_token, '').replace('⁇', '')
+        text = text.replace(self._text_encoder._cls_token, '').replace(self._text_encoder._sep_token, '').replace(self._text_encoder._pad_token, '')
         return text
 
     def _store_examples(self, examples: List[Dict], file_path: str, template: str):
