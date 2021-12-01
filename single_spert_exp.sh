@@ -1,9 +1,9 @@
 #! /bin/sh
-#путь до датасета, который содержит файлы, содержащие в названии подстроки train и test
+#Путь до датасета, который содержит файлы, содержащие в названии подстроки train и test
 export DS_path="./data/datasets/RDRS_multicontext_train_filtered_nltk_tokenization_raw/folds/6/"
-#путь до директории сохранения датасета в конвертированном сперт формате и сохранения результатов с предиктами
+#Путь до директории сохранения датасета в конвертированном сперт формате и сохранения результатов с предиктами, должен быть относительным путем к папке ./data/datasets
 export RES_path="RDRS_debug/folds/6/"
-#путь до модели, можно использовать и веб-путь
+#Путь до модели, можно использовать и веб-путь. Pipeline работает с моделями следующих топологий: xlm-roberta-base и xlm-roberta-large 
 export MODEL_path="xlm-roberta-large"
 
 
@@ -14,7 +14,7 @@ export ORIGIN_TEST=`grep -m2 test ./input_convertion_report.txt | tail -n-1`
 rm ./input_convertion_report.txt
 CONFIG="./configs/"$CONFIG
 export Epoch_num=`grep epochs $CONFIG | grep -Eo '[0-9]{1,}'`
-sed -i 's/xlm-roberta-large/'$MODEL_path'/g' $CONFIG
+sed -i 's|xlm-roberta-large|'$MODEL_path'|g' $CONFIG
 
 python spert.py train --config $CONFIG
 

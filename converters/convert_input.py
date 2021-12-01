@@ -149,7 +149,7 @@ for rel_type in rel_types_set:
                                       'verbose': rel_type,
                                       'symmetric': False}
 
-with open(save_path + 'types' + '.json', 'w') as f:
+with open(save_path + '/' + 'types' + '.json', 'w') as f:
     json.dump(types_d, f)
 
 #конфиг спертовский дампим
