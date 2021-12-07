@@ -117,7 +117,10 @@ for mode, mode_path in [('train', train_file), ('test', test_file)]:
         #заполняем поле с relations
         new_sample['relations']=[]
         for r_num, rel in enumerate(uniq_id['relations']):
-            rel_type = rel['relation_type'].replace('none_', '') + '_' + str(rel['relation_class'])
+            if 'relation_class' in rel:
+                rel_type = rel['relation_type'] + '_' + str(rel['relation_class'])
+            else:
+                rel_type = rel['relation_type']
             rel_types_set.add(rel_type)
             new_rel = dict.fromkeys(['type', 'head', 'tail'])
             new_rel['type'] = rel_type
