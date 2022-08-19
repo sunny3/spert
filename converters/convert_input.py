@@ -33,6 +33,8 @@ test_file = test_files[0]
 
 def tokenization(text):
     data_df = split_doc_on_words({'text': text}, language='other')
+    if data_df is None:
+        return None
     toks = []
     for row in data_df.iterrows():
         new_tok = dict.fromkeys(['forma', 'posStart', 'posEnd', 'len'])
@@ -70,6 +72,8 @@ for mode, mode_path in [('train', train_file), ('test', test_file)]:
 
         new_sample = {}
         toks = tokenization(text)
+        if not toks:
+            continue
 
         new_sample['tokens'] = toks
 

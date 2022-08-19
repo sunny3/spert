@@ -1,8 +1,8 @@
 #! /bin/sh
 #Путь до датасета, который содержит файлы, содержащие в названии подстроки train и test
-export DS_path="./data/datasets/RDRS_multicontext_train_filtered_nltk_tokenization_raw/folds/6/"
+export DS_path="./data_debug"
 #Путь до директории сохранения датасета в конвертированном сперт формате и сохранения результатов с предиктами, должен быть относительным путем к папке ./data/datasets
-export RES_path="RDRS_debug/folds/6/"
+export RES_path="DDI_debug"
 #Путь до модели, можно использовать и веб-путь. Pipeline работает с моделями следующих топологий: xlm-roberta-base и xlm-roberta-large 
 export MODEL_path="xlm-roberta-large"
 

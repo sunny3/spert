@@ -95,6 +95,10 @@ def split_doc_on_words(doc, language="russian"):
             d_word = {"sent_ind": sent_ind, "sent_start": sent.start, "sent_stop": sent.stop,
                       "word_ind_in_sent": word_ind, "word_start": word.start, "word_stop": word.stop, "word": word.text}
             res.append(d_word)
+    
+    if len(res)==0:
+        print('empty review')
+        return None
     res = pd.DataFrame(res)
     res["word_start_in_doc"] = res["word_start"] + res["sent_start"]
     res["word_stop_in_doc"] = res["word_stop"] + res["sent_start"]
