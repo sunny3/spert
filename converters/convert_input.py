@@ -9,6 +9,7 @@ if os.getcwd().find('converters')>=0:
 parser = argparse.ArgumentParser(description='Help to parse args')
 parser.add_argument('--data_path', type=str, help='Path to the dataset, which will be converted to the spert format, this path must include files which have test and train substringes in their names')
 parser.add_argument('--res_path', type=str, help='This is the relative path from ./data/datasets folder. The full path is ./data/datasets/ + res_dir')
+parser.add_argument('--filter_negative', action='store_true', help='If there is a need in filtering negative samples')
 
 args = parser.parse_args()
 
@@ -26,15 +27,15 @@ test_files = [os.path.join(ds_path, file) for file in os.listdir(ds_path) if fil
 if len(test_files)!=1:
     raise ValueError("Error, dataset directory must contain only one file with the name, which include the substring 'test'")
     
-
+if args.filter_negative:
+    #what we consider to be negative classes
+    negative_types = ['false', 'neg']
     
 train_file = train_files[0]
 test_file = test_files[0]
 
 def tokenization(text):
     data_df = split_doc_on_words({'text': text}, language='other')
-    if data_df is None:
-        return None
     toks = []
     for row in data_df.iterrows():
         new_tok = dict.fromkeys(['forma', 'posStart', 'posEnd', 'len'])
@@ -74,7 +75,6 @@ for mode, mode_path in [('train', train_file), ('test', test_file)]:
         toks = tokenization(text)
         if not toks:
             continue
-
         new_sample['tokens'] = toks
 
         #заполняем поле entities в spert формате
@@ -122,9 +122,15 @@ for mode, mode_path in [('train', train_file), ('test', test_file)]:
         new_sample['relations']=[]
         for r_num, rel in enumerate(uniq_id['relations']):
             if 'relation_class' in rel:
+                if args.filter_negative:
+                    if str(rel['relation_class'])=='0':
+                        continue
                 rel_type = rel['relation_type'] + '_' + str(rel['relation_class'])
             else:
                 rel_type = rel['relation_type']
+            if args.filter_negative:
+                if rel_type in negative_types:
+                    continue
             rel_types_set.add(rel_type)
             new_rel = dict.fromkeys(['type', 'head', 'tail'])
             new_rel['type'] = rel_type
